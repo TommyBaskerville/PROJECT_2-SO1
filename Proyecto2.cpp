@@ -10,64 +10,25 @@ struct Nodo{
     Nodo *siguiente;
 };
 
-void menu();
 void insertarCola(Nodo *&,Nodo *&,char,int);
 bool cola_vacia(Nodo *);
 void suprimirCola(Nodo *&,Nodo *&,char &,int &);
-void generarElementos(Nodo *&, Nodo *&);
+void generarElementos(Nodo *&, Nodo *&, bool &);
+void mostrarCola(Nodo *);
 
 int main(){
-    int contador = rand() % 81 + 20; // Generar un número aleatorio entre 20 y 100
-    cout << "El contador es: " << contador << endl;
-    menu();
-    return 0;
-}
-
-void menu(){
-    int opc, prioridad;
-    char dato;
-
     Nodo *frente = NULL;
     Nodo *fin = NULL;
+    bool mostrar = false;
 
-    thread generador(generarElementos, ref(frente), ref(fin)); // Crear un hilo para generar elementos
+    thread generador(generarElementos, ref(frente), ref(fin), ref(mostrar)); // Crear un hilo para generar elementos
 
-    do{
-        system("clear"); // Limpiar la pantalla en Linux
-        cout<<"\t.:Menu:.\n";
-        cout<<"1. Insertar un caracter en la cola"<<endl;
-        cout<<"2. Mostrar elementos de una cola "<<endl;
-        cout<<"3. Salir"<<endl;
-        cout<<"Opcion: ";
-        cin>>opc;
-
-        switch (opc)
-        {
-        case 1:
-            cout<<"Ingrese el caracter para agregar a la cola: ";
-            cin>>dato;
-            prioridad = rand() % 3 + 1; // Generar un número aleatorio entre 1 y 3 para la prioridad
-            insertarCola(frente,fin,dato,prioridad);
-            break;
-        case 2:
-            cout<<"\n Mostrando los elementos de la cola: ";
-            while (frente != NULL)
-            {
-                suprimirCola(frente,fin,dato,prioridad);
-                if (frente != NULL)
-                    cout<<dato<<" ";
-            }
-            cout<<endl;
-            system("read -p 'Presione Enter para continuar...' var"); // Pausar la ejecución en Linux
-            break;
-        case 3:
-            break;
-        default:
-            cout<<"Opcion no valida"<<endl;
-            system("read -p 'Presione Enter para continuar...' var"); // Pausar la ejecución en Linux
-            break;
+    while (true) {
+        if (mostrar) {
+            mostrarCola(frente); // mostrar la cola si se ha agregado un elemento
+            mostrar = false; // resetear la variable
         }
-    } while (opc != 3);
+    }
 
     generador.join(); // Esperar a que el hilo termine
 }
@@ -120,13 +81,24 @@ bool cola_vacia(Nodo *frente){
     return (frente == NULL);
 }
 
-void generarElementos(Nodo *&frente, Nodo *&fin){
+void generarElementos(Nodo *&frente, Nodo *&fin, bool &mostrar){
     int i = 0;
     while (true) {
         char dato = 'A' + i; // generar un nuevo elemento
         int prioridad = rand() % 3 + 1; // generar una prioridad aleatoria
         insertarCola(frente, fin, dato, prioridad); // insertar el elemento en la cola
         i++; // incrementar el contador
+        mostrar = true; // indicar que se debe mostrar la cola
         this_thread::sleep_for(chrono::seconds(1)); // esperar un segundo antes de generar el siguiente elemento
     }
+}
+
+void mostrarCola(Nodo *frente) {
+    cout << "\nMostrando los elementos de la cola: ";
+    while (frente != NULL)
+    {
+        cout << frente->dato << " ";
+        frente = frente->siguiente;
+    }
+    cout << endl;
 }

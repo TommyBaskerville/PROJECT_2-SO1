@@ -27,6 +27,16 @@ void menu(){
     Nodo *frente = NULL;
     Nodo *fin = NULL;
 
+    int n = 15; // number of elements to add
+    int i = 0; // counter for loop
+
+    while (i < n) {
+        char dato = 'A' + i; // generate a character to add to the queue
+        int prioridad = rand() % 3 + 1; // generate a random priority
+        insertarCola(frente, fin, dato, prioridad); // insert the element into the queue
+        i++; // increment the counter
+    }
+
     do{
         system("clear"); // Limpiar la pantalla en Linux
         cout<<"\t.:Menu:.\n";
@@ -66,10 +76,7 @@ void menu(){
 }
 
 void insertarCola(Nodo *&frente, Nodo *&fin, char dato, int prioridad){
-    Nodo *nuevo_nodo = new Nodo();
-    nuevo_nodo->dato = dato;
-    nuevo_nodo->prioridad = prioridad;
-    nuevo_nodo->siguiente = NULL;
+    Nodo *nuevo_nodo = new Nodo{dato, prioridad, NULL};
 
     if (cola_vacia(frente))
     {
@@ -100,7 +107,6 @@ void insertarCola(Nodo *&frente, Nodo *&fin, char dato, int prioridad){
 void suprimirCola(Nodo *&frente, Nodo *&fin, char &dato, int &prioridad){
     dato = frente->dato;
     prioridad = frente->prioridad;
-    Nodo *aux = frente;
     if (frente == fin)
     {
         frente = NULL;
@@ -110,7 +116,7 @@ void suprimirCola(Nodo *&frente, Nodo *&fin, char &dato, int &prioridad){
     {
         frente = frente->siguiente;
     }
-    delete aux;
+    delete frente;
 }
 
 bool cola_vacia(Nodo *frente){

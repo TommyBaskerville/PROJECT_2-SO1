@@ -21,6 +21,16 @@ int main(){
     Nodo *fin = NULL;
     bool mostrar = false;
 
+    int n = 15; // number of elements to add
+    int i = 0; // counter for loop
+
+    while (i < n) {
+        char dato = 'A' + i; // generate a character to add to the queue
+        int prioridad = rand() % 3 + 1; // generate a random priority
+        insertarCola(frente, fin, dato, prioridad); // insert the element into the queue
+        i++; // increment the counter
+    }
+
     thread generador(generarElementos, ref(frente), ref(fin), ref(mostrar)); // Crear un hilo para generar elementos
 
     while (true) {

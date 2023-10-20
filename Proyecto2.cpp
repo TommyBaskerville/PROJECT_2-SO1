@@ -30,6 +30,7 @@ int main(){
 
     thread decrementador(decrementarContador, ref(frente)); // Crear un hilo para decrementar el contador de los elementos
 
+
     while (true) {
         if (mostrar) {
             mostrarCola(frente); // mostrar la cola si se ha agregado un elemento
@@ -138,6 +139,9 @@ void decrementarContador(Nodo *&frente) {
         Nodo *aux = frente;
         while (aux != NULL) {
             aux->contador -= rand() % 5 + 1; // decrementar el contador de cada elemento en un valor aleatorio entre 1 y 5
+            if (aux->contador < 0) {
+                aux->contador = 0; // asignar el valor 0 al contador si ha llegado a ser negativo
+            }
             aux = aux->siguiente;
         }
         this_thread::sleep_for(chrono::seconds(1)); // esperar un segundo antes de volver a decrementar los contadores

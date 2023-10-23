@@ -1,11 +1,11 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <cstdlib>
 #include <mutex>
-#include <queue>
-#include <condition_variable>
-
 using namespace std;
+mutex colaMutex;
+
 
 struct Nodo {
     char dato;
@@ -26,15 +26,17 @@ void insertarCola(Nodo*& frente, Nodo*& fin, char dato, int prioridad, int conta
 }
 
 void suprimirCola(Nodo*& frente, Nodo*& fin, char& dato, int& prioridad, int& contador) {
-    Nodo* aux = frente;
-    dato = aux->dato;
-    prioridad = aux->prioridad;
-    contador = aux->contador;
-    frente = frente->siguiente;
-    if (frente == NULL) {
-        fin = NULL;
+    if (frente != NULL) {
+        Nodo* temp = frente;
+        dato = frente->dato;
+        prioridad = frente->prioridad;
+        contador = frente->contador;
+        frente = frente->siguiente;
+        if (frente == NULL) {
+            fin = NULL;
+        }
+        delete temp;
     }
-    delete aux;
 }
 
 void mostrarCola(Nodo* frente) {
@@ -46,43 +48,83 @@ void mostrarCola(Nodo* frente) {
     cout << endl;
 }
 
-void procesarElementos(queue<Nodo>& cola, mutex& mtx, condition_variable& cv) {
-    while (true) {
-        unique_lock<mutex> lock(mtx);
-        cv.wait(lock, [&cola] { return !cola.empty(); });
-        Nodo nodo = cola.front();
-        cola.pop();
-        lock.unlock();
-        suprimirCola(nodo.dato, nodo.prioridad, nodo.contador);
-        this_thread::sleep_for(chrono::seconds(1));
-    }
-}
-
-void generarElementos(queue<Nodo>& cola, mutex& mtx, condition_variable& cv) {
+void generarElementos(Nodo*& frente, Nodo*& fin) {
     int i = 0;
     while (true) {
         char dato = 'A' + i;
         int prioridad = rand() % 3 + 1;
         int contador = rand() % 81 + 20;
-        Nodo nodo{ dato, prioridad, contador, NULL };
-        {
-            lock_guard<mutex> lock(mtx);
-            cola.push(nodo);
-        }
-        mostrarCola(cola.front());
-        cv.notify_one();
+        insertarCola(frente, fin, dato, prioridad, contador);
+        mostrarCola(frente);
         this_thread::sleep_for(chrono::seconds(1));
         i++;
     }
 }
 
+void decrementarContador(Nodo*& frente) {
+    while (true) {
+        Nodo* aux = frente;
+        while (aux != NULL) {
+            aux->contador -= rand() % 5 + 1;
+            if (aux->contador < 0) {
+                aux->contador = 0;
+            }
+            aux = aux->siguiente;
+        }
+        this_thread::sleep_for(chrono::seconds(1));
+    }
+}
+
+
+void suprimirColaEnHilo(Nodo*& frente, Nodo*& fin, char& dato, int& prioridad, int& contador) {
+    while (true) {
+        colaMutex.lock();
+        if (frente != nullptr && frente->contador == 0) {
+            suprimirCola(frente, fin, dato, prioridad, contador);
+            cout << "Elemento eliminado: " << dato << "(" << contador << ")" << endl;
+        }
+        colaMutex.unlock();
+        this_thread::sleep_for(chrono::seconds(1));
+    }
+}
+
+
+void moverNodosAlPrincipio(Nodo*& frente) {
+    while (true) {
+        Nodo* aux = frente;
+        Nodo* anterior = NULL;
+        
+        while (aux != NULL) {
+            if (aux->contador == 0) {
+                // Mover el nodo al principio de la cola
+                if (anterior != NULL) {
+                    anterior->siguiente = aux->siguiente;
+                    aux->siguiente = frente;
+                    frente = aux;
+                    aux = anterior->siguiente;
+                }
+            } else {
+                anterior = aux;
+                aux = aux->siguiente;
+            }
+        }
+
+        this_thread::sleep_for(chrono::seconds(1));
+    }
+}
+
 int main() {
-    queue<Nodo> cola;
-    mutex mtx;
-    condition_variable cv;
-    thread hilo_procesar(procesarElementos, ref(cola), ref(mtx), ref(cv));
-    thread hilo_generar(generarElementos, ref(cola), ref(mtx), ref(cv));
-    hilo_procesar.join();
-    hilo_generar.join();
+    Nodo* frente = NULL;
+    Nodo* fin = NULL;
+    char dato;
+    int prioridad, contador;
+    thread generador(generarElementos, ref(frente), ref(fin));
+    thread decrementador(decrementarContador, ref(frente));
+    thread moverNodos(moverNodosAlPrincipio, ref(frente));
+    thread supresor(suprimirColaEnHilo, ref(frente), ref(fin), ref(dato), ref(prioridad), ref(contador));
+    generador.join();
+    decrementador.join();
+    moverNodos.join();
+    supresor.join();
     return 0;
 }

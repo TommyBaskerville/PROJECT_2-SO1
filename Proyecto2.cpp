@@ -178,7 +178,9 @@ void shortestJobFirst(Nodo*& frente, Nodo*& fin) {
                     frente->siguiente = NULL;
                     fin->siguiente = frente;
                     fin = frente;
-                    frente = procesoMasCorto;
+                    mostrarCola(frente);
+                    this_thread::sleep_for(chrono::seconds(1));
+                    // No se elimina el proceso actual de la cola
                 }
             }
         }
